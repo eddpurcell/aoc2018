@@ -1,0 +1,40 @@
+USING: kernel shuffle namespaces math sequences prettyprint ;
+
+IN: marbles
+
+SYMBOL: points
+V{ } clone points set
+
+SYMBOL: max-value
+72019 max-value set
+SYMBOL: nplayers
+458 nplayers set
+
+: place-marble ( n curr-ind marbles -- curr-ind marbles ) swap 2 + over length mod dup [ swap insert-nth ] dip swap ;
+: add-score ( n -- ) points get push ;
+: ind-to-remove ( curr-ind marbles -- ind ) swap 7 - dup 0 < [ swap length + ] [ nip ] if ;
+: remove-marble ( curr-ind marbles -- curr-ind marbles ) swap over ind-to-remove swap 2dup nth add-score over [ remove-nth ] dip swap ;
+
+0
+V{ 0 } clone ! ( curr-ind marbles )
+! 72019 
+max-value get
+<iota> [ 1 + ] map
+[
+  dup 23 mod 0 =
+  [ drop remove-marble ]
+  [ pick pick place-marble 2swap 2drop ]
+  if
+] each
+
+! . .
+2drop
+
+: nth-or-0 ( ind seq -- 0/n ) 2dup length < [ nth ] [ 2drop 0 ] if ;
+: set-nth+ ( n ind seq -- seq ) dup [ rot [ 2dup nth-or-0 ] dip + -rot set-nth ] dip ;
+: players>score-inds ( nplayers max-value -- seq ) <iota> [ 1 + ] map [ 23 mod 0 = ] filter [ over mod ] map nip ;
+: add-23s ( -- ) points get [ 1 + 23 * + ] map-index points set ;
+: scores ( nplayers max-value -- seq ) [ points get ] 2dip players>score-inds V{ } [ rot set-nth+ ] 2reduce ;
+
+add-23s
+nplayers get max-value get scores supremum .
